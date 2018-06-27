@@ -60,15 +60,16 @@ namespace eShopDashboard.Queries
             return productStats.Where(p => p.next != null && p.prev != null);
         }
 
-        public Task<dynamic[]> GetProductsHistoryDepthAsync(IEnumerable<int> products)
+        public async Task<dynamic[]> GetProductsHistoryDepthAsync(IEnumerable<int> products)
         {
-            return _orderingContext.OrderItems
+            var dbQuery = await _orderingContext.OrderItems
                 .Where(c => products.Contains(c.ProductId))
                 .Select(c => new { c.ProductId, c.Order.OrderDate.Month, c.Order.OrderDate.Year })
-                .Distinct()
+                .Distinct().ToArrayAsync();
+            return dbQuery
                 .GroupBy(k => k.ProductId, g => new { g.Year, g.Month }, (k, g) => new { ProductId = k, count = g.Count() })
                 .Cast<dynamic>()
-                .ToArrayAsync();
+                .ToArray();
         }
     }
 }
